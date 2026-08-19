@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مصمم سجادة غرفة المعيشة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <p class="eyebrow">غرفة المعيشة</p>
+        <h1>مصمم السجادة</h1>
+        <p class="subtitle">
+          جرّب توزيع الألوان بسهولة قبل تنفيذ السجادة.
+          المقاس الحقيقي: <strong>٢٫١٠ م × ٣ م</strong>
+          — <strong>٧ × ١٠ مربعات</strong>
+        </p>
+      </header>
+
+      <main class="layout">
+        <aside class="panel" aria-label="أدوات التصميم">
+          <section class="picker" aria-labelledby="color-title">
+            <h2 id="color-title">اختر اللون</h2>
+            <p class="hint">اختر لونًا ثم انقر على أي مربع في السجادة.</p>
+
+            <div class="swatches" role="radiogroup" aria-labelledby="color-title">
+              <button
+                type="button"
+                class="swatch is-active"
+                data-color="#171717"
+                role="radio"
+                aria-checked="true"
+                aria-label="أسود"
+              >
+                <span class="swatch-chip" style="background: #171717"></span>
+                <span class="swatch-meta">
+                  <span class="swatch-name">أسود</span>
+                  <span class="swatch-code">#171717</span>
+                </span>
+                <span class="swatch-check" aria-hidden="true">✓</span>
+              </button>
+
+              <button
+                type="button"
+                class="swatch"
+                data-color="#6B4F3A"
+                role="radio"
+                aria-checked="false"
+                aria-label="بني قهوة"
+              >
+                <span class="swatch-chip" style="background: #6b4f3a"></span>
+                <span class="swatch-meta">
+                  <span class="swatch-name">بني قهوة</span>
+                  <span class="swatch-code">#6B4F3A</span>
+                </span>
+                <span class="swatch-check" aria-hidden="true">✓</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="stats" aria-live="polite">
+            <div class="stat">
+              <span class="stat-dot" style="background: #171717"></span>
+              <span>أسود: <strong id="black-count">٠</strong> / ٤٠</span>
+            </div>
+            <div class="stat">
+              <span class="stat-dot" style="background: #6b4f3a"></span>
+              <span>بني قهوة: <strong id="brown-count">٧٠</strong></span>
+            </div>
+          </section>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" id="swap-btn">
+              عكس أماكن الألوان
+            </button>
+            <button type="button" class="btn btn-ghost" id="fill-btn">
+              املأ السجادة باللون المختار
+            </button>
+            <button type="button" class="btn btn-ghost" id="reset-btn">
+              إعادة التعيين
+            </button>
+          </div>
+        </aside>
+
+        <section class="stage" aria-label="السجادة">
+          <div class="carpet-wrap">
+            <div class="dimension dim-width" aria-hidden="true">
+              <span>٢٫١٠ م</span>
+              <span>٧ مربعات</span>
+            </div>
+
+            <div class="carpet-frame">
+              <div
+                id="carpet"
+                class="carpet"
+                role="grid"
+                aria-label="سجادة ٧ أعمدة و١٠ صفوف"
+              ></div>
+            </div>
+
+            <div class="dimension dim-length" aria-hidden="true">
+              <span>٣ م</span>
+              <span>١٠ مربعات</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
