@@ -40,7 +40,8 @@ const lengthLabel = document.getElementById("length-label");
 const colsLabel = document.getElementById("cols-label");
 const rowsLabel = document.getElementById("rows-label");
 
-let colors = DEFAULT_COLORS.slice(0, 2);
+let materialId = 0;
+let materials = DEFAULT_COLORS.slice(0, 2).map((color) => makeMaterial(color));
 let selectedIndex = 0;
 let config = {
   widthM: 2.1,
@@ -49,11 +50,22 @@ let config = {
   rows: 10,
 };
 
+function makeMaterial(color) {
+  materialId += 1;
+  return {
+    id: `fill-${materialId}`,
+    type: "color",
+    color: color.toLowerCase(),
+    image: null,
+    name: "",
+  };
+}
+
 const toArabicDigits = (value) =>
   String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[digit]);
 
-function selectedColor() {
-  return colors[selectedIndex];
+function selectedMaterial() {
+  return materials[selectedIndex];
 }
 
 function formatMeters(value) {
@@ -83,18 +95,40 @@ function normalizeHex(value) {
   return `#${hex.toLowerCase()}`;
 }
 
+function applyFill(cell, material) {
+  cell.dataset.fill = material.id;
+  if (material.type === "image" && material.image) {
+    cell.style.backgroundColor = material.color || "#888888";
+    cell.style.backgroundImage = `url("${material.image}")`;
+  } else {
+    cell.style.backgroundImage = "none";
+    cell.style.backgroundColor = material.color;
+  }
+}
+
+function refillById(id) {
+  const material = materials.find((item) => item.id === id);
+  if (!material) {
+    return;
+  }
+  carpet.querySelectorAll(".cell").forEach((cell) => {
+    if (cell.dataset.fill === id) {
+      applyFill(cell, material);
+    }
+  });
+}
+
 function createCarpet() {
   carpet.replaceChildren();
   const fragment = document.createDocumentFragment();
   const total = totalSquares();
-  const baseColor = colors[0];
+  const base = materials[0];
 
   for (let i = 0; i < total; i += 1) {
     const cell = document.createElement("button");
     cell.type = "button";
     cell.className = "cell";
-    cell.dataset.color = baseColor;
-    cell.style.background = baseColor;
+    applyFill(cell, base);
     cell.setAttribute("role", "gridcell");
     cell.setAttribute("aria-label", `مربع ${toArabicDigits(i + 1)}`);
     cell.addEventListener("click", () => paintCell(cell));
@@ -133,29 +167,24 @@ function sizeCarpet() {
 }
 
 function paintCell(cell) {
-  cell.dataset.color = selectedColor();
-  cell.style.background = selectedColor();
+  applyFill(cell, selectedMaterial());
   updateCounts();
 }
 
-function recolorCells(oldColor, newColor) {
-  if (oldColor.toLowerCase() === newColor.toLowerCase()) {
+function setPaletteColor(index, nextColor, source) {
+  const material = materials[index];
+  const wasImage = material.type === "image";
+  material.type = "color";
+  material.color = nextColor.toLowerCase();
+  material.image = null;
+  material.name = "";
+  refillById(material.id);
+
+  if (wasImage) {
+    renderColorList();
+    updateCounts();
     return;
   }
-
-  carpet.querySelectorAll(".cell").forEach((cell) => {
-    if (cell.dataset.color.toLowerCase() === oldColor.toLowerCase()) {
-      cell.dataset.color = newColor;
-      cell.style.background = newColor;
-    }
-  });
-}
-
-function setPaletteColor(index, nextColor, source) {
-  const previous = colors[index];
-  const normalized = nextColor.toLowerCase();
-  colors[index] = normalized;
-  recolorCells(previous, normalized);
 
   const row = colorList.children[index];
   if (row) {
@@ -163,23 +192,53 @@ function setPaletteColor(index, nextColor, source) {
     const picker = row.querySelector('input[type="color"]');
     const hex = row.querySelector(".hex-input");
     if (swatch) {
-      swatch.style.background = normalized;
+      swatch.style.backgroundColor = material.color;
+      swatch.style.backgroundImage = "none";
     }
     if (picker && source !== "picker") {
-      picker.value = normalized;
+      picker.value = material.color;
     }
     if (hex && source !== "hex") {
-      hex.value = normalized;
+      hex.value = material.color;
     }
   }
 
   updateCounts();
 }
 
+function setPaletteImage(index, dataUrl, fileName) {
+  const material = materials[index];
+  material.type = "image";
+  material.image = dataUrl;
+  material.name = fileName;
+  refillById(material.id);
+  renderColorList();
+  updateCounts();
+}
+
+function clearPaletteImage(index) {
+  const material = materials[index];
+  material.type = "color";
+  material.image = null;
+  material.name = "";
+  refillById(material.id);
+  renderColorList();
+  updateCounts();
+}
+
+function readImageFile(file, callback) {
+  if (!file || !file.type.startsWith("image/")) {
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => callback(reader.result);
+  reader.readAsDataURL(file);
+}
+
 function renderColorList() {
   colorList.replaceChildren();
 
-  colors.forEach((color, index) => {
+  materials.forEach((material, index) => {
     const row = document.createElement("div");
     row.className = `color-row${index === selectedIndex ? " is-active" : ""}`;
     row.dataset.index = String(index);
@@ -189,11 +248,17 @@ function renderColorList() {
 
     const swatch = document.createElement("label");
     swatch.className = "color-swatch";
-    swatch.style.background = color;
+    if (material.type === "image" && material.image) {
+      swatch.style.backgroundImage = `url("${material.image}")`;
+      swatch.style.backgroundSize = "cover";
+      swatch.style.backgroundPosition = "center";
+    } else {
+      swatch.style.backgroundColor = material.color;
+    }
 
     const picker = document.createElement("input");
     picker.type = "color";
-    picker.value = color.toLowerCase();
+    picker.value = material.color;
     picker.setAttribute("aria-label", `اختيار لون ${toArabicDigits(index + 1)}`);
     swatch.appendChild(picker);
 
@@ -207,18 +272,49 @@ function renderColorList() {
     const hex = document.createElement("input");
     hex.type = "text";
     hex.className = "hex-input";
-    hex.value = color;
+    hex.value = material.color;
     hex.spellcheck = false;
     hex.maxLength = 7;
     hex.setAttribute("aria-label", `رمز لون ${toArabicDigits(index + 1)}`);
+    if (material.type === "image") {
+      hex.hidden = true;
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "color-row-actions";
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.hidden = true;
+
+    const imageBtn = document.createElement("button");
+    imageBtn.type = "button";
+    imageBtn.className = "image-btn";
+    imageBtn.textContent = material.type === "image" ? "تغيير" : "إرفاق صورة";
+
+    actions.append(imageBtn);
+    if (material.type === "image") {
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "image-btn";
+      clearBtn.textContent = "حذف";
+      clearBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        clearPaletteImage(index);
+      });
+      actions.append(clearBtn);
+    } else {
+      actions.classList.add("single");
+    }
 
     const check = document.createElement("span");
     check.className = "color-row-check";
     check.setAttribute("aria-hidden", "true");
     check.textContent = "✓";
 
-    meta.append(name, hex);
-    row.append(swatch, meta, check);
+    meta.append(name, hex, actions);
+    row.append(swatch, meta, check, fileInput);
     colorList.appendChild(row);
 
     row.addEventListener("click", () => selectColor(index));
@@ -245,8 +341,22 @@ function renderColorList() {
       }
     });
     hex.addEventListener("blur", () => {
-      hex.value = colors[index];
+      hex.value = materials[index].color;
       hex.classList.remove("is-invalid");
+    });
+
+    imageBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectColor(index);
+      fileInput.click();
+    });
+    fileInput.addEventListener("click", (event) => event.stopPropagation());
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      readImageFile(file, (dataUrl) => {
+        setPaletteImage(index, dataUrl, file.name);
+      });
+      fileInput.value = "";
     });
   });
 }
@@ -262,74 +372,67 @@ function selectColor(index) {
 
 function setColorCount(count) {
   const nextCount = Math.min(LIMITS.maxColors, Math.max(LIMITS.minColors, count));
-  if (nextCount === colors.length) {
+  if (nextCount === materials.length) {
     return;
   }
 
-  if (nextCount > colors.length) {
-    for (let i = colors.length; i < nextCount; i += 1) {
-      colors.push(DEFAULT_COLORS[i] || DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+  if (nextCount > materials.length) {
+    for (let i = materials.length; i < nextCount; i += 1) {
+      materials.push(makeMaterial(DEFAULT_COLORS[i] || DEFAULT_COLORS[i % DEFAULT_COLORS.length]));
     }
   } else {
-    colors = colors.slice(0, nextCount);
+    materials = materials.slice(0, nextCount);
   }
 
-  if (selectedIndex >= colors.length) {
-    selectedIndex = colors.length - 1;
+  if (selectedIndex >= materials.length) {
+    selectedIndex = materials.length - 1;
   }
 
-  colorCountInput.value = String(colors.length);
+  colorCountInput.value = String(materials.length);
   renderColorList();
   updateCounts();
 }
 
 function invertColors() {
-  if (colors.length < 2) {
+  if (materials.length < 2) {
     return;
   }
 
   carpet.querySelectorAll(".cell").forEach((cell) => {
-    const index = colors.findIndex(
-      (color) => color.toLowerCase() === cell.dataset.color.toLowerCase()
-    );
+    const index = materials.findIndex((material) => material.id === cell.dataset.fill);
     if (index === -1) {
       return;
     }
-    const nextColor = colors[(index + 1) % colors.length];
-    cell.dataset.color = nextColor;
-    cell.style.background = nextColor;
+    applyFill(cell, materials[(index + 1) % materials.length]);
   });
   updateCounts();
 }
 
-function paintCells(cells, color) {
-  cells.forEach((cell) => {
-    cell.dataset.color = color;
-    cell.style.background = color;
-  });
-}
-
-function fillCarpet(color) {
-  paintCells([...carpet.querySelectorAll(".cell")], color);
+function fillCarpet(material) {
+  carpet.querySelectorAll(".cell").forEach((cell) => applyFill(cell, material));
   updateCounts();
 }
 
 function updateCounts() {
   const cells = [...carpet.querySelectorAll(".cell")];
-  const counts = colors.map(
-    (color) =>
-      cells.filter((cell) => cell.dataset.color.toLowerCase() === color.toLowerCase()).length
+  const counts = materials.map(
+    (material) => cells.filter((cell) => cell.dataset.fill === material.id).length
   );
   const matched = counts.reduce((sum, count) => sum + count, 0);
   const other = cells.length - matched;
 
   statsEl.replaceChildren();
-  colors.forEach((color, index) => {
+  materials.forEach((material, index) => {
     const stat = document.createElement("div");
     stat.className = "stat";
+    const dotStyle =
+      material.type === "image" && material.image
+        ? `background-image: url("${material.image}"); background-size: cover;`
+        : `background: ${material.color}`;
+    const label = material.type === "image" ? "صورة" : "لون";
     stat.innerHTML = `
-      <span class="stat-dot" style="background: ${color}"></span>
-      <span>لون ${toArabicDigits(index + 1)}: <strong>${toArabicDigits(counts[index])}</strong></span>
+      <span class="stat-dot" style="${dotStyle}"></span>
+      <span>${label} ${toArabicDigits(index + 1)}: <strong>${toArabicDigits(counts[index])}</strong></span>
     `;
     statsEl.appendChild(stat);
   });
@@ -337,7 +440,7 @@ function updateCounts() {
   if (other > 0) {
     const stat = document.createElement("div");
     stat.className = "stat";
-    stat.innerHTML = `<span>ألوان أخرى: <strong>${toArabicDigits(other)}</strong></span>`;
+    stat.innerHTML = `<span>أخرى: <strong>${toArabicDigits(other)}</strong></span>`;
     statsEl.appendChild(stat);
   }
 
@@ -345,8 +448,13 @@ function updateCounts() {
 }
 
 function updateGrout() {
-  const used = [...carpet.querySelectorAll(".cell")].map((cell) => cell.dataset.color);
-  const source = used.length ? used : colors;
+  const used = [...carpet.querySelectorAll(".cell")]
+    .map((cell) => {
+      const material = materials.find((item) => item.id === cell.dataset.fill);
+      return material && material.type === "color" ? material.color : null;
+    })
+    .filter(Boolean);
+  const source = used.length ? used : materials.map((item) => item.color);
   let r = 0;
   let g = 0;
   let b = 0;
@@ -462,8 +570,8 @@ function init() {
 
   sizeForm.addEventListener("submit", applySize);
   swapBtn.addEventListener("click", invertColors);
-  fillBtn.addEventListener("click", () => fillCarpet(selectedColor()));
-  resetBtn.addEventListener("click", () => fillCarpet(colors[0]));
+  fillBtn.addEventListener("click", () => fillCarpet(selectedMaterial()));
+  resetBtn.addEventListener("click", () => fillCarpet(materials[0]));
   bordersBtn.addEventListener("click", toggleBorders);
   window.addEventListener("resize", sizeCarpet);
 
