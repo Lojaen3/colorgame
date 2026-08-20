@@ -27,6 +27,7 @@ const statsEl = document.getElementById("stats");
 const fillBtn = document.getElementById("fill-btn");
 const resetBtn = document.getElementById("reset-btn");
 const swapBtn = document.getElementById("swap-btn");
+const bordersBtn = document.getElementById("borders-btn");
 const sizeForm = document.getElementById("size-form");
 const widthInput = document.getElementById("width-input");
 const lengthInput = document.getElementById("length-input");
@@ -339,6 +340,45 @@ function updateCounts() {
     stat.innerHTML = `<span>ألوان أخرى: <strong>${toArabicDigits(other)}</strong></span>`;
     statsEl.appendChild(stat);
   }
+
+  updateGrout();
+}
+
+function updateGrout() {
+  const used = [...carpet.querySelectorAll(".cell")].map((cell) => cell.dataset.color);
+  const source = used.length ? used : colors;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+
+  source.forEach((hex) => {
+    const value = normalizeHex(hex);
+    if (!value) {
+      return;
+    }
+    r += parseInt(value.slice(1, 3), 16);
+    g += parseInt(value.slice(3, 5), 16);
+    b += parseInt(value.slice(5, 7), 16);
+    count += 1;
+  });
+
+  if (!count) {
+    return;
+  }
+
+  r /= count;
+  g /= count;
+  b /= count;
+
+  const brightness = (r + g + b) / 3;
+  const scale = brightness > 150 ? 0.72 : brightness < 55 ? 1.65 : 0.84;
+  const toHex = (channel) =>
+    Math.round(Math.min(255, Math.max(0, channel * scale)))
+      .toString(16)
+      .padStart(2, "0");
+
+  carpet.style.setProperty("--grout", `#${toHex(r)}${toHex(g)}${toHex(b)}`);
 }
 
 function readSizeInputs() {
@@ -403,6 +443,11 @@ function applySize(event) {
   createCarpet();
 }
 
+function toggleBorders() {
+  const hidden = carpet.classList.toggle("is-seamless");
+  bordersBtn.textContent = hidden ? "إظهار الحدود" : "إزالة الحدود";
+}
+
 function init() {
   colorCountInput.addEventListener("input", () => {
     const count = Number(colorCountInput.value);
@@ -419,6 +464,7 @@ function init() {
   swapBtn.addEventListener("click", invertColors);
   fillBtn.addEventListener("click", () => fillCarpet(selectedColor()));
   resetBtn.addEventListener("click", () => fillCarpet(colors[0]));
+  bordersBtn.addEventListener("click", toggleBorders);
   window.addEventListener("resize", sizeCarpet);
 
   updateTotalPreview();

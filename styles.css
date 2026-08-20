@@ -356,8 +356,12 @@ body {
 .carpet {
   display: grid;
   gap: 1px;
-  background: #7a6556;
+  background: var(--grout, #7a6556);
   outline: 1px solid rgba(70, 48, 32, 0.28);
+}
+
+.carpet.is-seamless {
+  gap: 0;
 }
 
 .cell {
