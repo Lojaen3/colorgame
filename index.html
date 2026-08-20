@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>مصمم سجادة غرفة المعيشة</title>
+    <title>مصمم السجاد</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,66 +15,104 @@
   <body>
     <div class="page">
       <header class="header">
-        <p class="eyebrow">غرفة المعيشة</p>
-        <h1>مصمم السجادة</h1>
-        <p class="subtitle">
+        <h1>مصمم السجاد</h1>
+        <p class="subtitle" id="page-subtitle">
           جرّب توزيع الألوان بسهولة قبل تنفيذ السجادة.
-          المقاس الحقيقي: <strong>٢٫١٠ م × ٣ م</strong>
-          — <strong>٧ × ١٠ مربعات</strong>
+          حدد المقاس وعدد المربعات ثم لوّن النمط.
         </p>
       </header>
 
       <main class="layout">
         <aside class="panel" aria-label="أدوات التصميم">
+          <section class="size-section" aria-labelledby="size-title">
+            <h2 id="size-title">مقاس السجادة</h2>
+            <p class="hint">حدد الطول والعرض وعدد المربعات داخل السجادة.</p>
+
+            <form id="size-form" class="size-form">
+              <div class="field-grid">
+                <label class="field">
+                  <span>العرض (متر)</span>
+                  <input
+                    id="width-input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0.3"
+                    max="8"
+                    step="0.01"
+                    value="2.10"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>الطول (متر)</span>
+                  <input
+                    id="length-input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0.3"
+                    max="8"
+                    step="0.01"
+                    value="3"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>المربعات بالعرض</span>
+                  <input
+                    id="cols-input"
+                    type="number"
+                    inputmode="numeric"
+                    min="1"
+                    max="40"
+                    step="1"
+                    value="7"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>المربعات بالطول</span>
+                  <input
+                    id="rows-input"
+                    type="number"
+                    inputmode="numeric"
+                    min="1"
+                    max="50"
+                    step="1"
+                    value="10"
+                    required
+                  />
+                </label>
+              </div>
+
+              <p class="total-preview">
+                المجموع: <strong id="total-preview">٧٠</strong> مربعًا
+              </p>
+              <p id="size-error" class="size-error" role="alert"></p>
+              <button type="submit" class="btn btn-secondary">تطبيق المقاس</button>
+            </form>
+          </section>
+
           <section class="picker" aria-labelledby="color-title">
             <h2 id="color-title">اختر اللون</h2>
-            <p class="hint">اختر لونًا ثم انقر على أي مربع في السجادة.</p>
+            <p class="hint">حدد عدد الألوان، ثم اختر اللون من البيكر أو اكتب رمزه مثل <span dir="ltr">#171717</span>.</p>
 
-            <div class="swatches" role="radiogroup" aria-labelledby="color-title">
-              <button
-                type="button"
-                class="swatch is-active"
-                data-color="#171717"
-                role="radio"
-                aria-checked="true"
-                aria-label="أسود"
-              >
-                <span class="swatch-chip" style="background: #171717"></span>
-                <span class="swatch-meta">
-                  <span class="swatch-name">أسود</span>
-                  <span class="swatch-code">#171717</span>
-                </span>
-                <span class="swatch-check" aria-hidden="true">✓</span>
-              </button>
+            <label class="field color-count-field">
+              <span>عدد الألوان</span>
+              <input
+                id="color-count-input"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="8"
+                step="1"
+                value="2"
+              />
+            </label>
 
-              <button
-                type="button"
-                class="swatch"
-                data-color="#6B4F3A"
-                role="radio"
-                aria-checked="false"
-                aria-label="بني قهوة"
-              >
-                <span class="swatch-chip" style="background: #6b4f3a"></span>
-                <span class="swatch-meta">
-                  <span class="swatch-name">بني قهوة</span>
-                  <span class="swatch-code">#6B4F3A</span>
-                </span>
-                <span class="swatch-check" aria-hidden="true">✓</span>
-              </button>
-            </div>
+            <div id="color-list" class="color-list" role="radiogroup" aria-labelledby="color-title"></div>
           </section>
 
-          <section class="stats" aria-live="polite">
-            <div class="stat">
-              <span class="stat-dot" style="background: #171717"></span>
-              <span>أسود: <strong id="black-count">٠</strong> / ٤٠</span>
-            </div>
-            <div class="stat">
-              <span class="stat-dot" style="background: #6b4f3a"></span>
-              <span>بني قهوة: <strong id="brown-count">٧٠</strong></span>
-            </div>
-          </section>
+          <section id="stats" class="stats" aria-live="polite"></section>
 
           <div class="actions">
             <button type="button" class="btn btn-secondary" id="swap-btn">
@@ -91,9 +129,9 @@
 
         <section class="stage" aria-label="السجادة">
           <div class="carpet-wrap">
-            <div class="dimension dim-width" aria-hidden="true">
-              <span>٢٫١٠ م</span>
-              <span>٧ مربعات</span>
+            <div class="dimension dim-width">
+              <span id="width-label">٢٫١٠ م</span>
+              <span id="cols-label">٧ مربعات</span>
             </div>
 
             <div class="carpet-frame">
@@ -105,9 +143,9 @@
               ></div>
             </div>
 
-            <div class="dimension dim-length" aria-hidden="true">
-              <span>٣ م</span>
-              <span>١٠ مربعات</span>
+            <div class="dimension dim-length">
+              <span id="length-label">٣ م</span>
+              <span id="rows-label">١٠ مربعات</span>
             </div>
           </div>
         </section>
