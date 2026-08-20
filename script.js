@@ -1,12 +1,12 @@
 const DEFAULT_COLORS = [
   "#171717",
-  "#6B4F3A",
-  "#C4A574",
-  "#7A1F1F",
-  "#2C4A3E",
-  "#4A5568",
-  "#E8D5B5",
-  "#1E3A5F",
+  "#6b4f3a",
+  "#c4a574",
+  "#7a1f1f",
+  "#2c4a3e",
+  "#4a5568",
+  "#e8d5b5",
+  "#1e3a5f",
 ];
 
 const LIMITS = {
@@ -79,7 +79,7 @@ function normalizeHex(value) {
   if (hex.length !== 6) {
     return null;
   }
-  return `#${hex.toUpperCase()}`;
+  return `#${hex.toLowerCase()}`;
 }
 
 function createCarpet() {
@@ -152,18 +152,23 @@ function recolorCells(oldColor, newColor) {
 
 function setPaletteColor(index, nextColor, source) {
   const previous = colors[index];
-  colors[index] = nextColor;
-  recolorCells(previous, nextColor);
+  const normalized = nextColor.toLowerCase();
+  colors[index] = normalized;
+  recolorCells(previous, normalized);
 
   const row = colorList.children[index];
   if (row) {
+    const swatch = row.querySelector(".color-swatch");
     const picker = row.querySelector('input[type="color"]');
     const hex = row.querySelector(".hex-input");
+    if (swatch) {
+      swatch.style.background = normalized;
+    }
     if (picker && source !== "picker") {
-      picker.value = nextColor;
+      picker.value = normalized;
     }
     if (hex && source !== "hex") {
-      hex.value = nextColor;
+      hex.value = normalized;
     }
   }
 
@@ -181,10 +186,15 @@ function renderColorList() {
     row.setAttribute("aria-checked", String(index === selectedIndex));
     row.tabIndex = 0;
 
+    const swatch = document.createElement("label");
+    swatch.className = "color-swatch";
+    swatch.style.background = color;
+
     const picker = document.createElement("input");
     picker.type = "color";
-    picker.value = color;
+    picker.value = color.toLowerCase();
     picker.setAttribute("aria-label", `اختيار لون ${toArabicDigits(index + 1)}`);
+    swatch.appendChild(picker);
 
     const meta = document.createElement("div");
     meta.className = "color-row-meta";
@@ -207,7 +217,7 @@ function renderColorList() {
     check.textContent = "✓";
 
     meta.append(name, hex);
-    row.append(picker, meta, check);
+    row.append(swatch, meta, check);
     colorList.appendChild(row);
 
     row.addEventListener("click", () => selectColor(index));
@@ -220,9 +230,9 @@ function renderColorList() {
 
     picker.addEventListener("input", () => {
       selectColor(index);
-      setPaletteColor(index, picker.value.toUpperCase(), "picker");
+      setPaletteColor(index, picker.value, "picker");
     });
-    picker.addEventListener("click", (event) => event.stopPropagation());
+    swatch.addEventListener("click", (event) => event.stopPropagation());
 
     hex.addEventListener("click", (event) => event.stopPropagation());
     hex.addEventListener("focus", () => selectColor(index));
@@ -393,23 +403,31 @@ function applySize(event) {
   createCarpet();
 }
 
-colorCountInput.addEventListener("input", () => {
-  const count = Number(colorCountInput.value);
-  if (Number.isInteger(count)) {
-    setColorCount(count);
-  }
-});
+function init() {
+  colorCountInput.addEventListener("input", () => {
+    const count = Number(colorCountInput.value);
+    if (Number.isInteger(count)) {
+      setColorCount(count);
+    }
+  });
 
-[colsInput, rowsInput].forEach((input) => {
-  input.addEventListener("input", updateTotalPreview);
-});
+  [colsInput, rowsInput].forEach((input) => {
+    input.addEventListener("input", updateTotalPreview);
+  });
 
-sizeForm.addEventListener("submit", applySize);
-swapBtn.addEventListener("click", invertColors);
-fillBtn.addEventListener("click", () => fillCarpet(selectedColor()));
-resetBtn.addEventListener("click", () => fillCarpet(colors[0]));
-window.addEventListener("resize", sizeCarpet);
+  sizeForm.addEventListener("submit", applySize);
+  swapBtn.addEventListener("click", invertColors);
+  fillBtn.addEventListener("click", () => fillCarpet(selectedColor()));
+  resetBtn.addEventListener("click", () => fillCarpet(colors[0]));
+  window.addEventListener("resize", sizeCarpet);
 
-updateTotalPreview();
-renderColorList();
-createCarpet();
+  updateTotalPreview();
+  renderColorList();
+  createCarpet();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
